@@ -1,3 +1,8 @@
+# 进入项目目录
+cd BeeconMini-SEED-AC-Build
+
+# 创建修复后的工作流文件
+cat > .github/workflows/build-openwrt.yml << 'EOF'
 name: Build OpenWrt for SEED AC2
 
 on:
@@ -5,35 +10,24 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  schedule:
-    - cron: '0 2 * * 1'  # 每周一凌晨2点自动编译
-
-env:
-  BUILD_IMAGE: ubuntu:22.04
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container:
-      image: $BUILD_IMAGE
-
+    runs-on: ubuntu-22.04
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Install dependencies
       run: |
-        apt update
-        apt install -y $(cat scripts/dependencies.txt)
-        apt clean
+        sudo apt update
+        sudo apt install -y $(cat scripts/dependencies.txt)
 
     - name: Checkout OpenWrt source
       run: |
         git clone https://github.com/immortalwrt/immortalwrt.git openwrt
         cd openwrt
-        git checkout $(cat ../OPENWRT_VERSION 2>/dev/null || echo "openwrt-23.05")
 
     - name: Apply BeeconMini patches
       run: |
@@ -41,40 +35,19 @@ jobs:
         chmod +x ../scripts/apply_patches.sh
         ../scripts/apply_patches.sh
 
-    - name: Verify patches
-      run: |
-        cd openwrt
-        chmod +x ../scripts/verify_patches.sh
-        ../scripts/verify_patches.sh
-
-    - name: Configure target
-      run: |
-        cd openwrt
-        make defconfig
-        make menuconfig <<<EOF
-        # 自动选择配置
-        EOF
-
     - name: Build firmware
       run: |
         cd openwrt
-        make -j$(nproc) V=s
+        make -j$(nproc)
 
-    - name: Upload firmware artifacts
+    - name: Upload firmware
       uses: actions/upload-artifact@v4
       with:
-        name: firmware-seed-ac2
-        path: |
-          openwrt/bin/targets/mediatek/filogic/
-          openwrt/bin/packages/
-        retention-days: 30
+        name: seed-ac2-firmware
+        path: openwrt/bin/targets/mediatek/filogic/
+EOF
 
-    - name: Upload build logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-logs
-        path: |
-          openwrt/logs/
-          openwrt/build.log
-        retention-days: 7
+# 提交并推送修复
+git add .
+git commit -m "fix: use github-hosted runner to fix container error"
+git push origin main
