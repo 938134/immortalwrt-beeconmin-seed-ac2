@@ -27,10 +27,21 @@ jobs:
       run: |
         git clone --depth=1 https://github.com/immortalwrt/immortalwrt.git openwrt
 
+    - name: List files for debugging
+      run: |
+        echo "=== Current directory structure ==="
+        pwd
+        ls -la
+        echo "=== Scripts directory ==="
+        ls -la scripts/ || echo "scripts directory not found"
+        echo "=== Patches directory ==="
+        ls -la patches/ || echo "patches directory not found"
+
     - name: Apply patches
       run: |
         cd openwrt
         chmod +x ../scripts/apply-patches.sh
+        ls -la ../scripts/apply-patches.sh
         ../scripts/apply-patches.sh
 
     - name: Verify patches
