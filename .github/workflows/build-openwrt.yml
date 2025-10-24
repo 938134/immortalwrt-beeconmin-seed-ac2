@@ -1,8 +1,3 @@
-# 进入项目目录
-cd BeeconMini-SEED-AC-Build
-
-# 创建修复后的工作流文件
-cat > .github/workflows/build-openwrt.yml << 'EOF'
 name: Build OpenWrt for SEED AC2
 
 on:
@@ -10,6 +5,12 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 2 * * 1'  # 每周一凌晨2点自动编译
+
+env:
+  OPENWRT_BRANCH: master
+  TIME_ZONE: Asia/Shanghai
 
 jobs:
   build:
@@ -18,16 +19,24 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set timezone
+      run: |
+        sudo timedatectl set-timezone $TIME_ZONE
 
     - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y $(cat scripts/dependencies.txt)
+        sudo apt clean
 
     - name: Checkout OpenWrt source
       run: |
         git clone https://github.com/immortalwrt/immortalwrt.git openwrt
         cd openwrt
+        echo "Using default branch: $(git branch --show-current)"
 
     - name: Apply BeeconMini patches
       run: |
@@ -35,19 +44,36 @@ jobs:
         chmod +x ../scripts/apply_patches.sh
         ../scripts/apply_patches.sh
 
+    - name: Verify patches
+      run: |
+        cd openwrt
+        chmod +x ../scripts/verify_patches.sh
+        ../scripts/verify_patches.sh
+
+    - name: Configure target
+      run: |
+        cd openwrt
+        make defconfig
+
     - name: Build firmware
       run: |
         cd openwrt
-        make -j$(nproc)
+        make -j$(nproc) V=s
 
-    - name: Upload firmware
+    - name: Upload firmware artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: seed-ac2-firmware
-        path: openwrt/bin/targets/mediatek/filogic/
-EOF
+        name: firmware-seed-ac2-master
+        path: |
+          openwrt/bin/targets/mediatek/filogic/
+          openwrt/bin/packages/
+        retention-days: 30
 
-# 提交并推送修复
-git add .
-git commit -m "fix: use github-hosted runner to fix container error"
-git push origin main
+    - name: Upload build logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-master
+        path: |
+          openwrt/logs/
+        retention-days: 7
