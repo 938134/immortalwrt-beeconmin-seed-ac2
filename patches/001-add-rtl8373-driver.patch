@@ -1,0 +1,15 @@
+From: BeeconMini Build System <build@beeconmini.com>
+Date: Mon, 14 Jul 2025 10:00:00 +0800
+Subject: [PATCH] add rtl8373 switch driver support
+
+Add Realtek RTL8373 switch driver package for BeeconMini SEED AC series.
+
+Signed-off-by: BeeconMini Build System <build@beeconmini.com>
+---
+ package/kernel/rtl8373/Makefile | 60 +++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+ create mode 100644 package/kernel/rtl8373/Makefile
+
+diff --git a/package/kernel/rtl8373/Makefile b/package/kernel/rtl8373/Makefile
+new file mode 100644
+index 0000000000..e69de29bb2
