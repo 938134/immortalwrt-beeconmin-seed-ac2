@@ -31,6 +31,7 @@ jobs:
       run: |
         # 设置脚本权限
         chmod +x scripts/*.sh
+        echo "=== Script files ==="
         ls -la scripts/
 
     - name: Cache OpenWrt source
@@ -81,13 +82,12 @@ jobs:
         cd $OPENWRT_DIR
         echo "Now in: $(pwd)"
         
-        # 检查脚本是否存在
-        if [ -f "$CURRENT_DIR/scripts/apply-patches.sh" ]; then
+        # 检查脚本是否存在 - 修复文件名
+        if [ -f "$CURRENT_DIR/scripts/apply_patches.sh" ]; then
             echo "Applying patches..."
-            chmod +x "$CURRENT_DIR/scripts/apply-patches.sh"
-            "$CURRENT_DIR/scripts/apply-patches.sh"
+            "$CURRENT_DIR/scripts/apply_patches.sh"
         else
-            echo "ERROR: apply-patches.sh not found at $CURRENT_DIR/scripts/apply-patches.sh"
+            echo "ERROR: apply_patches.sh not found at $CURRENT_DIR/scripts/apply_patches.sh"
             ls -la "$CURRENT_DIR/scripts/" || echo "scripts directory not found"
             exit 1
         fi
@@ -97,11 +97,10 @@ jobs:
         CURRENT_DIR="$GITHUB_WORKSPACE"
         cd $OPENWRT_DIR
         
-        if [ -f "$CURRENT_DIR/scripts/verify-patches.sh" ]; then
-            chmod +x "$CURRENT_DIR/scripts/verify-patches.sh"
-            "$CURRENT_DIR/scripts/verify-patches.sh"
+        if [ -f "$CURRENT_DIR/scripts/verify_patches.sh" ]; then
+            "$CURRENT_DIR/scripts/verify_patches.sh"
         else
-            echo "WARNING: verify-patches.sh not found"
+            echo "WARNING: verify_patches.sh not found"
         fi
 
     - name: Apply configuration
