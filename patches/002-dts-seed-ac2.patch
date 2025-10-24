@@ -1,0 +1,166 @@
+From: BeeconMini Build System <build@beeconmini.com>
+Date: Mon, 14 Jul 2025 10:00:00 +0800
+Subject: [PATCH 2/5] add BeeconMini SEED AC2 device tree
+
+Add device tree file for BeeconMini SEED AC2 with MT7981B platform.
+
+Signed-off-by: BeeconMini Build System <build@beeconmini.com>
+---
+ target/linux/mediatek/dts/mt7981b-beeconmini-seed-ac2.dts | 200 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 200 insertions(+)
+ create mode 100644 target/linux/mediatek/dts/mt7981b-beeconmini-seed-ac2.dts
+
+diff --git a/target/linux/mediatek/dts/mt7981b-beeconmini-seed-ac2.dts b/target/linux/mediatek/dts/mt7981b-beeconmini-seed-ac2.dts
+new file mode 100644
+index 0000000000..e69de29bb2
+--- /dev/null
++++ b/target/linux/mediatek/dts/mt7981b-beeconmini-seed-ac2.dts
+@@ -0,0 +1,200 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++/dts-v1/;
++
++#include "mt7981b.dtsi"
++
++/ {
++	model = "BeeconMini SEED AC2";
++	compatible = "beeconmini,seed-ac2", "mediatek,mt7981";
++
++	chosen {
++		bootargs = "console=ttyS0,115200n1 loglevel=8 earlycon=uart8250,mmio32,0x11002000";
++	};
++
++	memory {
++		reg = <0 0x40000000 0 0x10000000>;
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		led_system: system {
++			label = "blue:system";
++			gpios = <&pio 11 GPIO_ACTIVE_LOW>;
++			default-state = "on";
++		};
++
++		led_wan: wan {
++			label = "blue:wan";
++			gpios = <&pio 12 GPIO_ACTIVE_LOW>;
++		};
++
++		led_lan: lan {
++			label = "blue:lan";
++			gpios = <&pio 9 GPIO_ACTIVE_LOW>;
++		};
++	};
++
++	gpio-keys {
++		compatible = "gpio-keys";
++
++		reset {
++			label = "reset";
++			gpios = <&pio 1 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_RESTART>;
++		};
++
++		wps {
++			label = "wps";
++			gpios = <&pio 0 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_WPS_BUTTON>;
++		};
++	};
++};
++
++&uart0 {
++	status = "okay";
++};
++
++&watchdog {
++	status = "okay";
++};
++
++&eth {
++	status = "okay";
++
++	gmac0: mac@0 {
++		compatible = "mediatek,eth-mac";
++		reg = <0>;
++		phy-mode = "2500base-x";
++
++		fixed-link {
++			speed = <2500>;
++			full-duplex;
++			pause;
++		};
++	};
++
++	gmac1: mac@1 {
++		compatible = "mediatek,eth-mac";
++		reg = <1>;
++		phy-mode = "gmii";
++		phy-handle = <&phy0>;
++	};
++};
++
++&mdio_bus {
++	phy0: ethernet-phy@0 {
++		reg = <0>;
++		compatible = "ethernet-phy-ieee802.3-c22";
++	};
++};
++
++&switch {
++	status = "okay";
++};
++
++&spi0 {
++	status = "okay";
++
++	flash@0 {
++		compatible = "jedec,spi-nor";
++		reg = <0>;
++		spi-max-frequency = <50000000>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "bl2";
++				reg = <0x00000 0x40000>;
++				read-only;
++			};
++
++			partition@40000 {
++				label = "u-boot-env";
++				reg = <0x40000 0x10000>;
++			};
++
++			factory: partition@50000 {
++				label = "factory";
++				reg = <0x50000 0x40000>;
++				read-only;
++			};
++
++			partition@90000 {
++				label = "fip";
++				reg = <0x90000 0x80000>;
++				read-only;
++			};
++
++			partition@110000 {
++				compatible = "denx,uimage";
++				label = "firmware";
++				reg = <0x110000 0xef0000>;
++			};
++		};
++	};
++};
++
++&wifi {
++	status = "okay";
++
++	mediatek,mtd-eeprom = <&factory 0x0>;
++};
+--
+2.34.1

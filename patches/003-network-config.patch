@@ -1,0 +1,39 @@
+From: BeeconMini Build System <build@beeconmini.com>
+Date: Mon, 14 Jul 2025 10:00:00 +0800
+Subject: [PATCH 3/5] add SEED AC2 network configuration
+
+Add network interface and MAC address configuration for BeeconMini SEED AC2.
+
+Signed-off-by: BeeconMini Build System <build@beeconmini.com>
+---
+ target/linux/mediatek/filogic/base-files/etc/board.d/02_network | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/target/linux/mediatek/filogic/base-files/etc/board.d/02_network b/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
+index 1234567..890abcd 100644
+--- a/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
++++ b/target/linux/mediatek/filogic/base-files/etc/board.d/02_network
+@@ -96,6 +96,9 @@ mediatek_setup_interfaces()
+ 	zyxel,ex5601-t0-ubootmod)
+ 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" eth1
+ 		;;
++	beeconmini,seed-ac2)
++		ucidef_set_interfaces_lan_wan eth0 eth1
++		;;
+ 	*)
+ 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" wan
+ 		;;
+@@ -183,6 +186,11 @@ mediatek_setup_macs()
+ 	yuncore,ax835)
+ 		label_mac=$(mtd_get_mac_binary "Factory" 0x4)
+ 		;;
++	beeconmini,seed-ac2)
++		lan_mac=$(mtd_get_mac_binary "art" 0x0)
++		wan_mac=$(macaddr_add "$lan_mac" 1)
++		[ -n "$lan_mac" ] && ucidef_set_interface_macaddr "lan" $lan_mac
++		;;
+ 	esac
+ 
+ 	[ -n "$lan_mac" ] && ucidef_set_interface_macaddr "lan" $lan_mac
+--
+2.34.1

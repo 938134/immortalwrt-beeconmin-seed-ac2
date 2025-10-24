@@ -1,0 +1,38 @@
+From: BeeconMini Build System <build@beeconmini.com>
+Date: Mon, 14 Jul 2025 10:00:00 +0800
+Subject: [PATCH 4/5] add SEED AC2 platform upgrade support
+
+Add platform upgrade and config copy support for BeeconMini SEED AC2.
+
+Signed-off-by: BeeconMini Build System <build@beeconmini.com>
+---
+ target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh b/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
+index abcdef1..2345678 100644
+--- a/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
++++ b/target/linux/mediatek/filogic/base-files/lib/upgrade/platform.sh
+@@ -177,6 +177,12 @@ platform_do_upgrade() {
+ 			;;
+ 		esac
+ 		;;
++	beeconmini,seed-ac2)
++		CI_KERNPART="kernel"
++		CI_ROOTPART="rootfs"
++		CI_DATAPART="rootfs_data"
++		emmc_do_upgrade "$1"
++		;;
+ 	*)
+ 		nand_do_upgrade "$1"
+ 		;;
+@@ -219,6 +225,9 @@ platform_copy_config() {
+ 			;;
+ 		esac
+ 		;;
++	beeconmini,seed-ac2|\
+ 	glinet,gl-mt6000|\
+ 	jdcloud,re-cp-03|\
+ 	ubnt,unifi-6-plus)
+--
+2.34.1

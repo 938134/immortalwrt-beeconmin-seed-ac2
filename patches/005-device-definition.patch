@@ -1,0 +1,34 @@
+From: BeeconMini Build System <build@beeconmini.com>
+Date: Mon, 14 Jul 2025 10:00:00 +0800
+Subject: [PATCH 5/5] add SEED AC2 device definition
+
+Add device definition for BeeconMini SEED AC2 to filogic.mk
+
+Signed-off-by: BeeconMini Build System <build@beeconmini.com>
+---
+ target/linux/mediatek/image/filogic.mk | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/target/linux/mediatek/image/filogic.mk b/target/linux/mediatek/image/filogic.mk
+index 9876543..abcdef0 100644
+--- a/target/linux/mediatek/image/filogic.mk
++++ b/target/linux/mediatek/image/filogic.mk
+@@ -270,6 +270,16 @@ endif
+ endef
+ TARGET_DEVICES += bananapi_bpi-r3
+ 
++define Device/beeconmini_seed-ac2
++  DEVICE_VENDOR := BeeconMini
++  DEVICE_MODEL := SEED AC2
++  DEVICE_DTS := mt7981b-beeconmini-seed-ac2
++  DEVICE_DTS_DIR := ../dts
++  DEVICE_PACKAGES := kmod-fs-f2fs kmod-fs-ext4 mkf2fs e2fsprogs kmod-switch-rtl8373 kmod-mt7981-firmware mt7981-wo-firmware
++  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
++endef
++TARGET_DEVICES += beeconmini_seed-ac2
++
+ define Device/cetron_ct3003
+   DEVICE_VENDOR := Cetron
+   DEVICE_MODEL := CT3003
+--
+2.34.1

@@ -1,0 +1,58 @@
+name: Build SEED AC2 Firmware
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check disk space
+      run: df -h
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y $(cat scripts/dependencies.txt)
+        sudo apt clean
+
+    - name: Checkout OpenWrt source
+      run: |
+        git clone --depth=1 https://github.com/immortalwrt/immortalwrt.git openwrt
+
+    - name: Apply patches
+      run: |
+        cd openwrt
+        chmod +x ../scripts/apply-patches.sh
+        ../scripts/apply-patches.sh
+
+    - name: Verify patches
+      run: |
+        cd openwrt
+        chmod +x ../scripts/verify-patches.sh
+        ../scripts/verify-patches.sh
+
+    - name: Apply configuration
+      run: |
+        cd openwrt
+        cat ../configs/seed-ac2.config >> .config
+        make defconfig
+
+    - name: Build firmware
+      run: |
+        cd openwrt
+        make -j2
+
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: seed-ac2-firmware
+        path: openwrt/bin/targets/mediatek/filogic/
+        retention-days: 7
