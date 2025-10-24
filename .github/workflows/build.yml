@@ -5,6 +5,16 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:  # 手动触发
+    inputs:
+      clean_build:
+        description: 'Clean build (remove cache)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  OPENWRT_DIR: openwrt
 
 jobs:
   build:
@@ -17,48 +27,99 @@ jobs:
     - name: Check disk space
       run: df -h
 
+    - name: Setup environment
+      run: |
+        # 设置脚本权限
+        chmod +x scripts/*.sh
+        ls -la scripts/
+
+    - name: Cache OpenWrt source
+      uses: actions/cache@v3
+      with:
+        path: openwrt
+        key: ${{ runner.os }}-openwrt-${{ hashFiles('scripts/dependencies.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
+
+    - name: Cache downloads
+      uses: actions/cache@v3
+      with:
+        path: openwrt/dl
+        key: ${{ runner.os }}-openwrt-dl-${{ hashFiles('scripts/dependencies.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-dl-
+
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y $(cat scripts/dependencies.txt)
+        xargs -a scripts/dependencies.txt sudo apt install -y
         sudo apt clean
 
     - name: Checkout OpenWrt source
+      if: steps.cache.outputs.cache-hit != 'true' || inputs.clean_build
       run: |
-        git clone --depth=1 https://github.com/immortalwrt/immortalwrt.git openwrt
+        git clone --depth=1 https://github.com/immortalwrt/immortalwrt.git $OPENWRT_DIR
 
-    - name: List files for debugging
+    - name: Debug file structure
       run: |
-        echo "=== Current directory structure ==="
+        echo "=== File Structure ==="
         pwd
         ls -la
-        echo "=== Scripts directory ==="
-        ls -la scripts/ || echo "scripts directory not found"
-        echo "=== Patches directory ==="
-        ls -la patches/ || echo "patches directory not found"
+        echo "=== Scripts ==="
+        ls -la scripts/
+        echo "=== Patches ==="
+        find patches/ -type f 2>/dev/null || echo "No patches found"
+        echo "=== Configs ==="
+        ls -la configs/ 2>/dev/null || echo "No configs found"
 
     - name: Apply patches
       run: |
-        cd openwrt
-        chmod +x ../scripts/apply-patches.sh
-        ls -la ../scripts/apply-patches.sh
-        ../scripts/apply-patches.sh
+        # 使用绝对路径
+        CURRENT_DIR="$GITHUB_WORKSPACE"
+        echo "Workspace: $CURRENT_DIR"
+        
+        cd $OPENWRT_DIR
+        echo "Now in: $(pwd)"
+        
+        # 检查脚本是否存在
+        if [ -f "$CURRENT_DIR/scripts/apply-patches.sh" ]; then
+            echo "Applying patches..."
+            chmod +x "$CURRENT_DIR/scripts/apply-patches.sh"
+            "$CURRENT_DIR/scripts/apply-patches.sh"
+        else
+            echo "ERROR: apply-patches.sh not found at $CURRENT_DIR/scripts/apply-patches.sh"
+            ls -la "$CURRENT_DIR/scripts/" || echo "scripts directory not found"
+            exit 1
+        fi
 
     - name: Verify patches
       run: |
-        cd openwrt
-        chmod +x ../scripts/verify-patches.sh
-        ../scripts/verify-patches.sh
+        CURRENT_DIR="$GITHUB_WORKSPACE"
+        cd $OPENWRT_DIR
+        
+        if [ -f "$CURRENT_DIR/scripts/verify-patches.sh" ]; then
+            chmod +x "$CURRENT_DIR/scripts/verify-patches.sh"
+            "$CURRENT_DIR/scripts/verify-patches.sh"
+        else
+            echo "WARNING: verify-patches.sh not found"
+        fi
 
     - name: Apply configuration
       run: |
-        cd openwrt
-        cat ../configs/seed-ac2.config >> .config
-        make defconfig
+        CURRENT_DIR="$GITHUB_WORKSPACE"
+        cd $OPENWRT_DIR
+        
+        if [ -f "$CURRENT_DIR/configs/seed-ac2.config" ]; then
+            cat "$CURRENT_DIR/configs/seed-ac2.config" >> .config
+            make defconfig
+        else
+            echo "ERROR: seed-ac2.config not found"
+            exit 1
+        fi
 
     - name: Build firmware
       run: |
-        cd openwrt
+        cd $OPENWRT_DIR
         make -j2
 
     - name: Upload firmware
