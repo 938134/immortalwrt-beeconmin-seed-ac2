@@ -70,8 +70,8 @@ jobs:
         ls -la scripts/
         echo "=== Patches ==="
         find patches/ -type f 2>/dev/null || echo "No patches found"
-        echo "=== Configs ==="
-        ls -la configs/ 2>/dev/null || echo "No configs found"
+        echo "=== Config ==="
+        ls -la config/ 2>/dev/null || echo "config directory found (not configs)"
 
     - name: Apply patches
       run: |
@@ -82,12 +82,12 @@ jobs:
         cd $OPENWRT_DIR
         echo "Now in: $(pwd)"
         
-        # 检查脚本是否存在 - 修复文件名
-        if [ -f "$CURRENT_DIR/scripts/apply_patches.sh" ]; then
+        # 修复：使用正确的文件名 apply-patches.sh（连字符）
+        if [ -f "$CURRENT_DIR/scripts/apply-patches.sh" ]; then
             echo "Applying patches..."
-            "$CURRENT_DIR/scripts/apply_patches.sh"
+            "$CURRENT_DIR/scripts/apply-patches.sh"
         else
-            echo "ERROR: apply_patches.sh not found at $CURRENT_DIR/scripts/apply_patches.sh"
+            echo "ERROR: apply-patches.sh not found at $CURRENT_DIR/scripts/apply-patches.sh"
             ls -la "$CURRENT_DIR/scripts/" || echo "scripts directory not found"
             exit 1
         fi
@@ -97,10 +97,11 @@ jobs:
         CURRENT_DIR="$GITHUB_WORKSPACE"
         cd $OPENWRT_DIR
         
-        if [ -f "$CURRENT_DIR/scripts/verify_patches.sh" ]; then
-            "$CURRENT_DIR/scripts/verify_patches.sh"
+        # 修复：使用正确的文件名 verify-patches.sh（连字符）
+        if [ -f "$CURRENT_DIR/scripts/verify-patches.sh" ]; then
+            "$CURRENT_DIR/scripts/verify-patches.sh"
         else
-            echo "WARNING: verify_patches.sh not found"
+            echo "WARNING: verify-patches.sh not found"
         fi
 
     - name: Apply configuration
@@ -108,11 +109,15 @@ jobs:
         CURRENT_DIR="$GITHUB_WORKSPACE"
         cd $OPENWRT_DIR
         
-        if [ -f "$CURRENT_DIR/configs/seed-ac2.config" ]; then
-            cat "$CURRENT_DIR/configs/seed-ac2.config" >> .config
+        # 修复：使用正确的目录名 config（不是 configs）
+        if [ -f "$CURRENT_DIR/config/seed-ac2.config" ]; then
+            cat "$CURRENT_DIR/config/seed-ac2.config" >> .config
             make defconfig
+            echo "✓ Configuration applied successfully"
         else
-            echo "ERROR: seed-ac2.config not found"
+            echo "ERROR: seed-ac2.config not found at $CURRENT_DIR/config/seed-ac2.config"
+            echo "Available config files:"
+            ls -la "$CURRENT_DIR/config/" 2>/dev/null || echo "config directory not found"
             exit 1
         fi
 
